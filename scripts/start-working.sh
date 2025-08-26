@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🚀 Hobby Manager Setup v1.0.0 (Working Version)"
+echo "🚀 Hobby Manager Setup v1.1.0 (Working Version)"
 echo "=================================================="
 
 # Colors for output

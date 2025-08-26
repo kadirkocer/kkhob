@@ -1,0 +1,172 @@
+/* macOS-specific styles for native look and feel */
+
+.macos {
+  /* macOS-specific font stack */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  
+  /* Enable font smoothing */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Better text rendering */
+  text-rendering: optimizeLegibility;
+}
+
+/* Native scrollbars on macOS */
+.macos ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.macos ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.macos ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: none;
+}
+
+.macos ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode scrollbars */
+.macos.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.macos.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Metal surface effects */
+.metal-surface {
+  backdrop-filter: blur(20px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .metal-surface {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Vibrancy effects for cards and panels */
+.macos .card-vibrancy {
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.macos.dark .card-vibrancy {
+  background: rgba(28, 28, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced button styles for macOS */
+.macos .btn-macos {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.macos .btn-macos:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.macos .btn-macos:active {
+  background: linear-gradient(180deg, rgba(245, 245, 247, 1) 0%, rgba(255, 255, 255, 0.9) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.macos.dark .btn-macos {
+  background: linear-gradient(180deg, rgba(58, 58, 60, 0.9) 0%, rgba(44, 44, 46, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.macos.dark .btn-macos:hover {
+  background: linear-gradient(180deg, rgba(68, 68, 70, 0.9) 0%, rgba(54, 54, 56, 0.9) 100%);
+}
+
+/* Sidebar optimizations */
+.macos .sidebar {
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(246, 246, 246, 0.8);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.macos.dark .sidebar {
+  background: rgba(28, 28, 30, 0.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Native focus rings */
+.macos input:focus,
+.macos textarea:focus,
+.macos button:focus {
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+
+/* Smooth animations optimized for macOS */
+.macos * {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Memory-efficient animations */
+.macos .animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.macos .animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .macos *,
+  .macos *::before,
+  .macos *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High DPI optimizations for Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .macos {
+    /* Sharper borders on Retina */
+    border-width: 0.5px;
+  }
+  
+  .macos .border {
+    border-width: 0.5px;
+  }
+}

@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { RecentEntries } from '@/components/recent-entries'
+import { EntryTabs } from '@/components/entry-tabs'
 import { HobbyStats } from '@/components/hobby-stats'
 import { QuickActions } from '@/components/quick-actions'
 import { SearchBar } from '@/components/search-bar'
@@ -36,25 +36,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Recent Entries */}
+      {/* Entry Tabs */}
       <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Entries</CardTitle>
-            <CardDescription>
-              Your latest hobby entries across all categories
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-16 bg-muted rounded animate-pulse" />
-              ))}
-            </div>}>
-              <RecentEntries />
-            </Suspense>
-          </CardContent>
-        </Card>
+        <Suspense fallback={<div className="h-96 bg-card rounded-lg animate-pulse" />}>
+          <EntryTabs />
+        </Suspense>
       </div>
     </div>
   )

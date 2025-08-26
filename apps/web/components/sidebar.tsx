@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { 
   Home, 
   Search, 
@@ -23,6 +25,26 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+  // Use try-catch for useTranslation to handle cases when i18n isn't ready
+  let t: any = (key: string) => key
+  let ready = false
+  
+  try {
+    const translation = useTranslation()
+    t = translation.t
+    ready = translation.ready
+  } catch (error) {
+    // Fallback when i18n isn't initialized
+    t = (key: string) => {
+      const fallbacks: Record<string, string> = {
+        dashboard: 'Dashboard',
+        search: 'Search', 
+        admin: 'Admin',
+        settings: 'Settings'
+      }
+      return fallbacks[key] || key
+    }
+  }
   
   const { data: hobbies = [] } = useQuery({
     queryKey: ['hobbies'],
@@ -68,19 +90,19 @@ export function Sidebar() {
             <SidebarLink 
               href="/" 
               icon={<Home className="h-4 w-4" />}
-              label="Home"
+              label={ready ? t('dashboard') : 'Dashboard'}
               collapsed={collapsed}
             />
             <SidebarLink 
               href="/search" 
               icon={<Search className="h-4 w-4" />}
-              label="Search"
+              label={ready ? t('search') : 'Search'}
               collapsed={collapsed}
             />
             <SidebarLink 
               href="/admin" 
               icon={<Database className="h-4 w-4" />}
-              label="Admin"
+              label={ready ? t('admin') : 'Admin'}
               collapsed={collapsed}
             />
           </div>
@@ -133,10 +155,12 @@ export function Sidebar() {
             {!collapsed && <span className="ml-2">Toggle theme</span>}
           </Button>
           
+          <LanguageSwitcher />
+          
           <SidebarLink 
             href="/settings" 
             icon={<Settings className="h-4 w-4" />}
-            label="Settings"
+            label={ready ? t('settings') : 'Settings'}
             collapsed={collapsed}
           />
         </div>

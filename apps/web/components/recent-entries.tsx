@@ -8,12 +8,22 @@ import { formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Heart, Eye, Tag } from 'lucide-react'
 
-export function RecentEntries() {
+interface RecentEntriesProps {
+  hobbyId?: number
+  entryType?: string
+  limit?: number
+}
+
+export function RecentEntries({ hobbyId, entryType, limit = 10 }: RecentEntriesProps) {
   const [mounted, setMounted] = useState(false)
   
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['entries', { recent: true }],
-    queryFn: () => api.getEntries({ limit: 10 }),
+    queryKey: ['entries', { hobbyId, entryType, recent: true }],
+    queryFn: () => api.getEntries({ 
+      hobby_id: hobbyId, 
+      limit,
+      // In a real app, you'd filter by entryType here
+    }),
     enabled: mounted,
   })
 
