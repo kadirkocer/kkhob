@@ -37,7 +37,7 @@ def export_data(output_file=None):
         data = {
             "metadata": {
                 "export_date": datetime.now().isoformat(),
-                "version": "1.1.0",
+                "version": "1.2.0",
                 "database_path": str(DB_PATH)
             },
             "tables": {}

@@ -107,10 +107,50 @@ class ApiClient {
     return this.request<TableInfo[]>('/api/admin/tables')
   }
 
+  async getAnalytics() {
+    return this.request<AnalyticsData>('/api/admin/analytics')
+  }
+
   async executeQuery(query: string) {
     return this.request<QueryResult>('/api/admin/query', {
       method: 'POST',
       body: JSON.stringify({ query }),
+    })
+  }
+
+  // Shelves
+  async getShelves(params: GetShelvesParams = {}) {
+    const searchParams = new URLSearchParams()
+    if (params.hobby_id) searchParams.append('hobby_id', params.hobby_id.toString())
+    
+    const query = searchParams.toString()
+    const endpoint = `/api/shelves/${query ? `?${query}` : ''}`
+    
+    return this.request<Shelf[]>(endpoint)
+  }
+
+  async getShelfItems(shelfId: number, params: GetShelfItemsParams = {}) {
+    const searchParams = new URLSearchParams()
+    if (params.limit) searchParams.append('limit', params.limit.toString())
+    if (params.offset) searchParams.append('offset', params.offset.toString())
+    
+    const query = searchParams.toString()
+    const endpoint = `/api/shelves/${shelfId}/items${query ? `?${query}` : ''}`
+    
+    return this.request<ShelfItem[]>(endpoint)
+  }
+
+  async createShelf(data: CreateShelfData) {
+    return this.request<{ id: number; message: string }>('/api/shelves/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async addShelfItem(shelfId: number, data: CreateShelfItemData) {
+    return this.request<{ id: number; message: string }>(`/api/shelves/${shelfId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     })
   }
 
@@ -239,4 +279,109 @@ export interface QueryResult {
   columns: string[]
   rows: Record<string, any>[]
   row_count: number
+}
+
+export interface AnalyticsData {
+  overview: {
+    totalEntries: number
+    totalHobbies: number
+    totalShelves: number
+    totalViews: number
+    storageUsed: string
+    activeUsers: number
+  }
+  trends: {
+    entriesThisWeek: number
+    entriesLastWeek: number
+    viewsThisWeek: number
+    viewsLastWeek: number
+  }
+  topContent: {
+    mostViewedEntries: Array<{
+      id: number
+      title: string
+      views: number
+      hobby: string
+    }>
+    popularTags: Array<{
+      name: string
+      count: number
+    }>
+    activeHobbies: Array<{
+      name: string
+      entryCount: number
+      lastActivity: string
+    }>
+  }
+  performance: {
+    averageLoadTime: number
+    errorRate: number
+    uptime: number
+    databaseQueries: number
+  }
+}
+
+export interface Shelf {
+  id: number
+  hobby_id: number
+  name: string
+  description?: string
+  type: string
+  view_mode: string
+  sort_by: string
+  sort_order: string
+  config_json: string
+  position: number
+  created_at: string
+  updated_at: string
+  hobby_name: string
+  item_count: number
+}
+
+export interface ShelfItem {
+  id: number
+  shelf_id: number
+  entry_id?: number
+  external_url?: string
+  title: string
+  subtitle?: string
+  cover_url?: string
+  metadata_json: string
+  position: number
+  added_at: string
+  entry_title?: string
+  entry_description?: string
+  type_key?: string
+  entry_created_at?: string
+}
+
+export interface GetShelvesParams {
+  hobby_id?: number
+}
+
+export interface GetShelfItemsParams {
+  limit?: number
+  offset?: number
+}
+
+export interface CreateShelfData {
+  hobby_id: number
+  name: string
+  description?: string
+  type?: string
+  view_mode?: string
+  sort_by?: string
+  sort_order?: string
+  config_json?: string
+  position?: number
+}
+
+export interface CreateShelfItemData {
+  entry_id?: number
+  external_url?: string
+  title?: string
+  subtitle?: string
+  cover_url?: string
+  metadata_json?: string
+  position?: number
 }

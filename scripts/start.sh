@@ -4,7 +4,7 @@
 
 set -e  # Exit on error
 
-echo "🚀 Hobby Manager Setup v1.1.0"
+echo "🚀 Hobby Manager Setup v1.2.0"
 echo "================================"
 
 # Colors for output

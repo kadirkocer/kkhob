@@ -218,7 +218,7 @@ def init_database():
     print("   Inserting initial settings...")
     
     # Insert version and initial settings
-    cursor.execute("INSERT INTO app_settings (key, value) VALUES ('version', '1.1.0')")
+    cursor.execute("INSERT INTO app_settings (key, value) VALUES ('version', '1.2.0')")
     cursor.execute("INSERT INTO app_settings (key, value) VALUES ('db_version', '1')")
     
     conn.commit()
