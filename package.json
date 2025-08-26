@@ -1,0 +1,30 @@
+{
+  "name": "hobby-manager",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "./scripts/start.sh",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd apps/api && uvicorn main:app --reload --port 8000",
+    "dev:web": "cd apps/web && next dev",
+    "build": "npm run build:web",
+    "build:web": "cd apps/web && next build",
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "cd apps/api && pytest",
+    "test:web": "cd apps/web && jest",
+    "lint": "npm run lint:api && npm run lint:web",
+    "lint:api": "cd apps/api && ruff check .",
+    "lint:web": "cd apps/web && next lint",
+    "export": "python scripts/backup.py export",
+    "import": "python scripts/backup.py import",
+    "reset": "python scripts/reset.py",
+    "version": "echo $npm_package_version"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
