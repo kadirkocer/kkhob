@@ -3,15 +3,23 @@
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { useState, useEffect } from 'react'
 import { formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Heart, Eye, Tag } from 'lucide-react'
 
 export function RecentEntries() {
+  const [mounted, setMounted] = useState(false)
+  
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['entries', { recent: true }],
     queryFn: () => api.getEntries({ limit: 10 }),
+    enabled: mounted,
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (isLoading) {
     return (

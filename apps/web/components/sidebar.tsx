@@ -17,16 +17,22 @@ import {
   Sun
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
   
   const { data: hobbies = [] } = useQuery({
     queryKey: ['hobbies'],
     queryFn: () => api.getHobbies(),
+    enabled: mounted, // Only fetch after mounting
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -119,7 +125,7 @@ export function Sidebar() {
             onClick={toggleTheme}
             className="w-full justify-start"
           >
-            {theme === 'dark' ? (
+            {mounted && theme === 'dark' ? (
               <Sun className="h-4 w-4" />
             ) : (
               <Moon className="h-4 w-4" />

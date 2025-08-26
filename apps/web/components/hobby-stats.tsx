@@ -2,24 +2,34 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Database, FileText, Folder, TrendingUp } from 'lucide-react'
 
 export function HobbyStats() {
+  const [mounted, setMounted] = useState(false)
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: () => api.getSystemStats(),
+    enabled: mounted,
   })
 
   const { data: hobbies = [] } = useQuery({
     queryKey: ['hobbies'],
     queryFn: () => api.getHobbies(),
+    enabled: mounted,
   })
 
   const { data: recentEntries = [] } = useQuery({
     queryKey: ['entries', { recent: true, limit: 1 }],
     queryFn: () => api.getEntries({ limit: 1 }),
+    enabled: mounted,
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (isLoading) {
     return (
