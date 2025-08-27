@@ -23,7 +23,7 @@ export function VersionBadge() {
     return (
       <div className="fixed top-4 left-4 z-50">
         <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded shadow-sm border">
-          v1.3.0
+          v1.4.0
         </span>
       </div>
     )
@@ -32,7 +32,7 @@ export function VersionBadge() {
   return (
     <div className="fixed top-4 left-4 z-50">
       <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded shadow-sm border">
-        v{version?.version || '1.3.0'}
+        v{version?.version || '1.4.0'}
       </span>
     </div>
   )
