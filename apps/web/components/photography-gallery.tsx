@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect, useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { api } from '@/lib/api'
 import { 
@@ -63,7 +64,20 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'masonry'>('grid')
   const [filter, setFilter] = useState<'all' | 'favorites'>('all')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const queryClient = useQueryClient()
   const { t, ready } = useTranslation()
+
+  // Upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      return api.uploadFile(file)
+    },
+    onSuccess: () => {
+      // Refresh photos after upload
+      queryClient.invalidateQueries({ queryKey: ['photos'] })
+    }
+  })
 
   // Mock data for now - in real app would come from API
   const mockPhotos: Photo[] = [
@@ -123,6 +137,29 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      uploadMutation.mutate(file)
+    } else {
+      alert('Please select an image file')
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDownload = (photo: Photo) => {
+    // Create a temporary link to download the image
+    const link = document.createElement('a')
+    link.href = `/api/files/${photo.filename}` // Assuming the API serves files at this endpoint
+    link.download = photo.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   const formatFileSize = (bytes: number) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
@@ -189,9 +226,13 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
           </Button>
           
           {/* Upload button */}
-          <Button size="sm">
+          <Button 
+            size="sm" 
+            onClick={handleUploadClick}
+            disabled={uploadMutation.isPending}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Upload
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
       </div>
@@ -359,7 +400,11 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
                     
                     {/* Actions */}
                     <div className="pt-4 border-t space-y-2">
-                      <Button className="w-full" variant="outline">
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        onClick={() => handleDownload(photo)}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
@@ -375,6 +420,15 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
           ))}
         </div>
       )}
+
+      {/* Hidden file input */}
+      <Input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
     </div>
   )
 }

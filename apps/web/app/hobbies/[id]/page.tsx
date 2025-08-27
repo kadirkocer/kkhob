@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator'
 import { AddFromUrl } from '@/components/add-from-url'
 import { ShelvesGrid } from '@/components/shelves-grid'
 import { PhotographyGallery } from '@/components/photography-gallery'
+import { EntryModal } from '@/components/entry-modal'
 import { 
   BarChart3, 
   Calendar, 
@@ -74,6 +75,8 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isEditing, setIsEditing] = useState(false)
+  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
+  const [entryModalOpen, setEntryModalOpen] = useState(false)
 
   // Fetch hobby data
   const { data: hobby, isLoading: hobbyLoading } = useQuery({
@@ -169,6 +172,11 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
   })
 
   const allTags = Array.from(new Set(entries.flatMap(entry => entry.tags)))
+
+  const handleEntryClick = (entryId: number) => {
+    setSelectedEntryId(entryId)
+    setEntryModalOpen(true)
+  }
 
   if (hobbyLoading || !hobby) {
     return (
@@ -320,7 +328,7 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
               <CardContent>
                 <div className="space-y-3">
                   {entries.slice(0, 3).map(entry => (
-                    <div key={entry.id} className="flex items-start space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                    <div key={entry.id} className="flex items-start space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer" onClick={() => handleEntryClick(entry.id)}>
                       <div className="w-12 h-12 bg-muted rounded flex items-center justify-center shrink-0">
                         <FileText className="h-6 w-6" />
                       </div>
@@ -369,19 +377,19 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push('/entries/new')}>
                   <Plus className="h-6 w-6 mb-2" />
                   Add Entry
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push(`/hobbies/${params.id}?tab=entries`)}>
                   <Search className="h-6 w-6 mb-2" />
                   Search
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push(`/hobbies/${params.id}?tab=analytics`)}>
                   <BarChart3 className="h-6 w-6 mb-2" />
                   Analytics
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push('/settings')}>
                   <Settings className="h-6 w-6 mb-2" />
                   Settings
                 </Button>
@@ -462,9 +470,9 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           {/* Entries Grid/List */}
           <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
             {filteredEntries.map(entry => (
-              <Card key={entry.id} className={`hover:shadow-md transition-shadow ${
+              <Card key={entry.id} className={`hover:shadow-md transition-shadow cursor-pointer ${
                 viewMode === 'list' ? 'flex' : ''
-              }`}>
+              }`} onClick={() => handleEntryClick(entry.id)}>
                 {entry.image && (
                   <div className={`bg-muted rounded ${
                     viewMode === 'list' ? 'w-24 h-24 shrink-0' : 'h-48'
@@ -544,6 +552,13 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Entry Modal */}
+      <EntryModal
+        entryId={selectedEntryId}
+        open={entryModalOpen}
+        onOpenChange={setEntryModalOpen}
+      />
     </div>
   )
 }
