@@ -2,12 +2,15 @@
 """
 Simple FastAPI app without SQLAlchemy for basic testing
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import sqlite3
 import json
 import os
+import uuid
 from pathlib import Path
+from datetime import datetime
 
 app = FastAPI(
     title="Hobby Manager",
@@ -429,6 +432,177 @@ async def get_tables():
     
     db.close()
     return tables
+
+@app.post("/api/entries/")
+async def create_entry(entry_data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Generate a simple slug if not provided
+    title = entry_data.get("title", "")
+    slug = entry_data.get("slug", title.lower().replace(" ", "-").replace("_", "-"))
+    
+    sql = """
+    INSERT INTO entries (hobby_id, type_key, title, description, content_markdown, tags, is_favorite, is_archived, view_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    
+    cursor.execute(sql, [
+        entry_data.get("hobby_id"),
+        entry_data.get("type_key", "note"),
+        title,
+        entry_data.get("description", ""),
+        entry_data.get("content_markdown", ""),
+        entry_data.get("tags", ""),
+        entry_data.get("is_favorite", False),
+        False,  # is_archived
+        0  # initial view_count
+    ])
+    
+    entry_id = cursor.lastrowid
+    db.commit()
+    db.close()
+    
+    return {"id": entry_id, "message": "Entry created successfully"}
+
+@app.get("/api/entries/{entry_id}")
+async def get_entry(entry_id: int):
+    db = get_db()
+    cursor = db.cursor()
+    
+    sql = """
+    SELECT e.id, e.hobby_id, e.type_key, e.title, e.description, e.content_markdown,
+           e.tags, e.slug, e.is_favorite, e.is_archived, e.view_count, e.created_at, e.updated_at,
+           h.name as hobby_name, h.icon as hobby_icon, h.color as hobby_color
+    FROM entries e
+    JOIN hobbies h ON h.id = e.hobby_id
+    WHERE e.id = ?
+    """
+    
+    cursor.execute(sql, [entry_id])
+    row = cursor.fetchone()
+    
+    if not row:
+        db.close()
+        raise HTTPException(status_code=404, detail="Entry not found")
+    
+    # Increment view count
+    cursor.execute("UPDATE entries SET view_count = view_count + 1 WHERE id = ?", [entry_id])
+    db.commit()
+    
+    entry = {
+        "id": row[0],
+        "hobby_id": row[1],
+        "type_key": row[2],
+        "title": row[3],
+        "description": row[4],
+        "content_markdown": row[5],
+        "tags": row[6],
+        "slug": row[7],
+        "is_favorite": bool(row[8]),
+        "is_archived": bool(row[9]),
+        "view_count": row[10] + 1,  # Include the increment
+        "created_at": row[11],
+        "updated_at": row[12],
+        "hobby_name": row[13],
+        "hobby_icon": row[14],
+        "hobby_color": row[15]
+    }
+    
+    db.close()
+    return entry
+
+@app.put("/api/entries/{entry_id}")
+async def update_entry(entry_id: int, entry_data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Check if entry exists
+    cursor.execute("SELECT id FROM entries WHERE id = ?", [entry_id])
+    if not cursor.fetchone():
+        db.close()
+        raise HTTPException(status_code=404, detail="Entry not found")
+    
+    sql = """
+    UPDATE entries 
+    SET title = ?, description = ?, content_markdown = ?, tags = ?, 
+        is_favorite = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """
+    
+    cursor.execute(sql, [
+        entry_data.get("title"),
+        entry_data.get("description"),
+        entry_data.get("content_markdown"),
+        entry_data.get("tags"),
+        entry_data.get("is_favorite", False),
+        entry_id
+    ])
+    
+    db.commit()
+    db.close()
+    
+    return {"message": "Entry updated successfully"}
+
+@app.delete("/api/entries/{entry_id}")
+async def delete_entry(entry_id: int):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Soft delete - mark as archived
+    cursor.execute("UPDATE entries SET is_archived = 1 WHERE id = ?", [entry_id])
+    
+    if cursor.rowcount == 0:
+        db.close()
+        raise HTTPException(status_code=404, detail="Entry not found")
+    
+    db.commit()
+    db.close()
+    
+    return {"message": "Entry deleted successfully"}
+
+# File upload directory
+UPLOAD_DIR = Path("../../data/uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+@app.post("/api/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf", "text/plain"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="File type not allowed")
+    
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Save file
+    try:
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    return {
+        "filename": unique_filename,
+        "original_filename": file.filename,
+        "content_type": file.content_type,
+        "size": len(content),
+        "url": f"/api/files/{unique_filename}"
+    }
+
+@app.get("/api/files/{filename}")
+async def get_file(filename: str):
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename
+    )
 
 if __name__ == "__main__":
     import uvicorn

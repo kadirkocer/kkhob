@@ -154,18 +154,19 @@ class ApiClient {
     })
   }
 
-  // Media
-  async uploadMedia(file: File) {
+  // File Upload
+  async uploadFile(file: File) {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await fetch(`${API_BASE_URL}/api/media/upload`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload/`, {
       method: 'POST',
       body: formData,
     })
 
     if (!response.ok) {
-      throw new Error('Upload failed')
+      const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }))
+      throw new Error(errorData.detail || 'Upload failed')
     }
 
     return response.json()
