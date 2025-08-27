@@ -349,9 +349,9 @@ export default function EntryPage({ params }: EntryPageProps) {
                       value={editData.hobby_id}
                       onChange={(e) => setEditData({...editData, hobby_id: parseInt(e.target.value)})}
                     >
-                      {hobbies.filter(h => !h.parent_id).map(hobby => (
+                      {hobbies.map(hobby => (
                         <option key={hobby.id} value={hobby.id}>
-                          {hobby.icon} {hobby.name}
+                          {hobby.parent_id ? '  ' : ''}{hobby.icon} {hobby.name}{hobby.parent_id ? ' (sub)' : ''}
                         </option>
                       ))}
                     </select>

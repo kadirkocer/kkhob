@@ -115,11 +115,21 @@ export function CreateEntryDialog({ hobbyId, className }: CreateEntryDialogProps
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {hobbies.filter(h => !h.parent_id).map((hobby) => (
+                  {hobbies
+                    .sort((a, b) => {
+                      // Sort parent hobbies first, then sub-hobbies under their parents
+                      if (!a.parent_id && !b.parent_id) return a.name.localeCompare(b.name)
+                      if (!a.parent_id) return -1
+                      if (!b.parent_id) return 1
+                      if (a.parent_id !== b.parent_id) return a.parent_id - b.parent_id
+                      return a.name.localeCompare(b.name)
+                    })
+                    .map((hobby) => (
                     <SelectItem key={hobby.id} value={hobby.id.toString()}>
                       <div className="flex items-center">
                         <span className="mr-2">{hobby.icon}</span>
-                        {hobby.name}
+                        <span className={hobby.parent_id ? "ml-4 text-sm" : "font-medium"}>{hobby.name}</span>
+                        {hobby.parent_id && <span className="ml-1 text-xs text-muted-foreground opacity-70">(sub)</span>}
                       </div>
                     </SelectItem>
                   ))}
