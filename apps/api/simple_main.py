@@ -11,7 +11,7 @@ from pathlib import Path
 
 app = FastAPI(
     title="Hobby Manager",
-    version="1.2.0",
+    version="1.3.0",
     description="Personal hobby management application"
 )
 
@@ -31,11 +31,11 @@ def get_db():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "version": "1.2.0"}
+    return {"status": "healthy", "version": "1.3.0"}
 
 @app.get("/api/version")
 async def get_version():
-    return {"version": "1.2.0"}
+    return {"version": "1.3.0"}
 
 @app.get("/api/hobbies/")
 async def get_hobbies():

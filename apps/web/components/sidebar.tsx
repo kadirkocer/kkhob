@@ -16,7 +16,9 @@ import {
   Database,
   Menu,
   Moon,
-  Sun
+  Sun,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
@@ -122,13 +124,11 @@ export function Sidebar() {
                 
                 <div className="space-y-1">
                   {mainHobbies.map((hobby) => (
-                    <SidebarLink
+                    <HobbyTreeNode
                       key={hobby.id}
-                      href={`/hobbies/${hobby.id}`}
-                      icon={<span className="text-sm">{hobby.icon}</span>}
-                      label={hobby.name}
+                      hobby={hobby}
+                      subHobbies={hobbies.filter(h => h.parent_id === hobby.id)}
                       collapsed={false}
-                      style={{ color: hobby.color }}
                     />
                   ))}
                 </div>
@@ -190,5 +190,62 @@ function SidebarLink({ href, icon, label, collapsed, style }: SidebarLinkProps) 
         {!collapsed && <span className="ml-2 truncate">{label}</span>}
       </Button>
     </Link>
+  )
+}
+
+interface HobbyTreeNodeProps {
+  hobby: any
+  subHobbies: any[]
+  collapsed: boolean
+}
+
+function HobbyTreeNode({ hobby, subHobbies, collapsed }: HobbyTreeNodeProps) {
+  const [expanded, setExpanded] = useState(false)
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center">
+        <Link href={`/hobbies/${hobby.id}`} className="flex-1">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="w-full justify-start pr-1"
+            style={{ color: hobby.color }}
+          >
+            <span className="text-sm">{hobby.icon}</span>
+            <span className="ml-2 truncate">{hobby.name}</span>
+          </Button>
+        </Link>
+        {subHobbies.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+          </Button>
+        )}
+      </div>
+      
+      {expanded && subHobbies.length > 0 && (
+        <div className="ml-4 space-y-1">
+          {subHobbies.map((subHobby) => (
+            <SidebarLink
+              key={subHobby.id}
+              href={`/hobbies/${subHobby.id}`}
+              icon={<span className="text-xs">{subHobby.icon}</span>}
+              label={subHobby.name}
+              collapsed={false}
+              style={{ color: subHobby.color, fontSize: '0.875rem' }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
