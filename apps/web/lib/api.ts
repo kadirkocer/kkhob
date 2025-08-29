@@ -40,7 +40,7 @@ class ApiClient {
   }
 
   async createHobby(data: CreateHobbyData) {
-    return this.request<Hobby>('/api/hobbies/', {
+    return this.request<{ id: number; message: string }>('/api/hobbies/', {
       method: 'POST',
       body: JSON.stringify(data),
     })

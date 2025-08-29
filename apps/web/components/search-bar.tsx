@@ -15,9 +15,14 @@ export function SearchBar() {
   const [showResults, setShowResults] = useState(false)
   const router = useRouter()
 
-  const { data: results = [], isLoading } = useQuery({
+  const { data: results = [], isLoading, error } = useQuery({
     queryKey: ['search', query],
-    queryFn: () => api.search({ q: query, limit: 5 }),
+    queryFn: async () => {
+      console.log('Searching for:', query)
+      const searchResults = await api.search({ q: query, limit: 5 })
+      console.log('Search results:', searchResults)
+      return searchResults
+    },
     enabled: query.length > 2,
   })
 
@@ -41,7 +46,7 @@ export function SearchBar() {
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search entries, hobbies, tags..."
+            placeholder="Makale, hobi, etiket ara..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setShowResults(true)}
@@ -57,7 +62,11 @@ export function SearchBar() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                Searching...
+                Aranıyor...
+              </div>
+            ) : error ? (
+              <div className="p-4 text-center text-sm text-red-500">
+                Arama hatası: {error.message}
               </div>
             ) : results.length > 0 ? (
               <div className="max-h-80 overflow-y-auto">
@@ -100,14 +109,14 @@ export function SearchBar() {
                         setShowResults(false)
                       }}
                     >
-                      View all results
+                      Tüm sonuçları görüntüle
                     </Button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                No results found for "{query}"
+                "{query}" için sonuç bulunamadı
               </div>
             )}
           </CardContent>

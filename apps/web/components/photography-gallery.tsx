@@ -32,6 +32,7 @@ import {
 interface PhotoGalleryProps {
   hobbyId?: number
   className?: string
+  hobbyName?: string
 }
 
 interface Photo {
@@ -59,7 +60,7 @@ interface Photo {
   tags?: string[]
 }
 
-export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
+export function PhotographyGallery({ hobbyId, className, hobbyName }: PhotoGalleryProps) {
   const [mounted, setMounted] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'masonry'>('grid')
@@ -78,8 +79,9 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
     if (!mounted) return
     
     const loadPhotos = () => {
-      // Get uploaded files from localStorage
-      const uploadedFiles = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+      // Get uploaded files from localStorage for this specific hobby
+      const hobbyKey = `uploadedPhotos_${hobbyId || 'general'}`
+      const uploadedFiles = JSON.parse(localStorage.getItem(hobbyKey) || '[]')
       
       // Mock photos to show the layout (will be replaced by real API)
       const mockPhotos: Photo[] = uploadedFiles.length === 0 ? [
@@ -124,7 +126,8 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
   // Function to refresh photos
   const refreshPhotos = () => {
     if (typeof window !== 'undefined') {
-      const uploadedFiles = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+      const hobbyKey = `uploadedPhotos_${hobbyId || 'general'}`
+      const uploadedFiles = JSON.parse(localStorage.getItem(hobbyKey) || '[]')
       const mockPhotos: Photo[] = uploadedFiles.length === 0 ? [
         {
           id: 1,
@@ -186,9 +189,10 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
       
       // Save to localStorage (temporary solution) - only on client side
       if (typeof window !== 'undefined') {
-        const existingPhotos = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+        const hobbyKey = `uploadedPhotos_${hobbyId || 'general'}`
+        const existingPhotos = JSON.parse(localStorage.getItem(hobbyKey) || '[]')
         existingPhotos.push(newPhoto)
-        localStorage.setItem('uploadedPhotos', JSON.stringify(existingPhotos))
+        localStorage.setItem(hobbyKey, JSON.stringify(existingPhotos))
       }
       
       // Refresh photos after upload
@@ -302,7 +306,7 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
         <div className="flex items-center space-x-4">
           <Camera className="h-6 w-6 text-primary" />
           <div>
-            <h2 className="text-2xl font-bold">Photography Gallery</h2>
+            <h2 className="text-2xl font-bold">{hobbyName ? `${hobbyName} Gallery` : 'Media Gallery'}</h2>
             <p className="text-muted-foreground" suppressHydrationWarning>{filteredPhotos.length} photos</p>
           </div>
         </div>

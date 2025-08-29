@@ -561,6 +561,75 @@ async def delete_entry(entry_id: int):
     
     return {"message": "Entry deleted successfully"}
 
+@app.post("/api/hobbies/")
+async def create_hobby(hobby_data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    
+    sql = """
+    INSERT INTO hobbies (name, slug, icon, color, parent_id, position, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """
+    
+    cursor.execute(sql, [
+        hobby_data.get("name"),
+        hobby_data.get("slug"),
+        hobby_data.get("icon", "📁"),
+        hobby_data.get("color", "#666666"),
+        hobby_data.get("parent_id"),
+        hobby_data.get("position", 0),
+        hobby_data.get("is_active", True)
+    ])
+    
+    hobby_id = cursor.lastrowid
+    db.commit()
+    db.close()
+    
+    return {"id": hobby_id, "message": "Hobby created successfully"}
+
+@app.put("/api/hobbies/{hobby_id}")
+async def update_hobby(hobby_id: int, hobby_data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    
+    sql = """
+    UPDATE hobbies 
+    SET name = ?, slug = ?, icon = ?, color = ?
+    WHERE id = ?
+    """
+    
+    cursor.execute(sql, [
+        hobby_data.get("name"),
+        hobby_data.get("slug"),
+        hobby_data.get("icon"),
+        hobby_data.get("color"),
+        hobby_id
+    ])
+    
+    if cursor.rowcount == 0:
+        db.close()
+        raise HTTPException(status_code=404, detail="Hobby not found")
+    
+    db.commit()
+    db.close()
+    
+    return {"message": "Hobby updated successfully"}
+
+@app.delete("/api/hobbies/clear")
+async def clear_all_hobbies():
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM hobbies")
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name='hobbies'")  # Reset auto-increment
+        db.commit()
+        db.close()
+        return {"message": "All hobbies cleared successfully"}
+    except Exception as e:
+        db.close()
+        raise HTTPException(status_code=500, detail=f"Error clearing hobbies: {str(e)}")
+
 # File upload directory
 UPLOAD_DIR = Path("../../data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,7 @@ import {
   Eye, 
   FileText, 
   Filter,
+  FolderOpen,
   Grid3X3,
   Heart, 
   List, 
@@ -75,7 +76,7 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isEditing, setIsEditing] = useState(false)
-  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [entryModalOpen, setEntryModalOpen] = useState(false)
 
   // Fetch hobby data
@@ -100,15 +101,16 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
   const { data: entries = [] } = useQuery({
     queryKey: ['hobbyEntries', params.id],
     queryFn: async () => {
-      // Mock data for demonstration
+      // Mock data in Turkish for demonstration
+      const hobbyName = hobby?.name || 'Hobi'
       const mockEntries: Entry[] = [
         {
-          id: 1,
-          title: `${hobby?.name || 'Hobby'} Project #1`,
-          description: 'A fascinating exploration into the depths of this hobby',
+          id: 1001,
+          title: `${hobbyName} Temel Proje`,
+          description: `Bu proje ${hobbyName.toLowerCase()} dünyasına derinlemesine bir keşif sunuyor`,
           url: 'https://example.com/project1',
           image: '/api/placeholder/300/200',
-          tags: ['beginner', 'tutorial', 'inspiration'],
+          tags: ['başlangıç', 'eğitim', 'ilham'],
           created_at: new Date(Date.now() - 86400000).toISOString(),
           updated_at: new Date().toISOString(),
           view_count: 24,
@@ -116,10 +118,10 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           rating: 4.5
         },
         {
-          id: 2,
-          title: `Advanced ${hobby?.name || 'Hobby'} Techniques`,
-          description: 'Deep dive into advanced concepts and methodologies',
-          tags: ['advanced', 'technique', 'skill-building'],
+          id: 1002,
+          title: `İleri ${hobbyName} Teknikleri`,
+          description: 'İleri düzey kavramlar ve metodolojilere derin bir bakış',
+          tags: ['ileri', 'teknik', 'beceri-geliştirme'],
           created_at: new Date(Date.now() - 172800000).toISOString(),
           updated_at: new Date(Date.now() - 86400000).toISOString(),
           view_count: 18,
@@ -127,11 +129,11 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           rating: 4.8
         },
         {
-          id: 3,
-          title: 'Quick Tips and Tricks',
-          description: 'Collection of useful shortcuts and hacks',
+          id: 1003,
+          title: 'Hızlı İpuçları ve Tüyolar',
+          description: 'Faydalı kısayollar ve pratik çözümlerin koleksiyonu',
           url: 'https://youtube.com/watch?v=example',
-          tags: ['tips', 'quick', 'productivity'],
+          tags: ['ipucu', 'hızlı', 'verimlilik'],
           created_at: new Date(Date.now() - 259200000).toISOString(),
           updated_at: new Date(Date.now() - 172800000).toISOString(),
           view_count: 31,
@@ -173,8 +175,8 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
 
   const allTags = Array.from(new Set(entries.flatMap(entry => entry.tags)))
 
-  const handleEntryClick = (entryId: number) => {
-    setSelectedEntryId(entryId)
+  const handleEntryClick = (entry: Entry) => {
+    setSelectedEntry(entry)
     setEntryModalOpen(true)
   }
 
@@ -305,11 +307,27 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
       {/* Main Content Tabs */}
       <Tabs value={tab} onValueChange={(value) => router.push(`/hobbies/${params.id}?tab=${value}`)}>
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="entries">Entries ({entries.length})</TabsTrigger>
-          <TabsTrigger value="shelves">Shelves</TabsTrigger>
-          <TabsTrigger value="gallery">Gallery</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
+          <TabsTrigger value="entries">Makaleler ({entries.length})</TabsTrigger>
+          <TabsTrigger value="shelves">Raflar</TabsTrigger>
+          {/* Only show Gallery tab for Photography and its sub-hobbies */}
+          {(hobby.name.toLowerCase().includes('photography') || 
+            hobby.name.toLowerCase().includes('fotoğrafçılık') ||
+            hobby.name.toLowerCase().includes('shooting') ||
+            hobby.name.toLowerCase().includes('çekim') ||
+            hobby.name.toLowerCase().includes('color grading') ||
+            hobby.name.toLowerCase().includes('renk düzeltme') ||
+            hobby.name.toLowerCase().includes('photo editing') ||
+            hobby.name.toLowerCase().includes('fotoğraf düzenleme') ||
+            hobby.slug.includes('photo') ||
+            hobby.slug.includes('shooting') ||
+            hobby.slug.includes('cekim') ||
+            hobby.slug.includes('color-grading') ||
+            hobby.slug.includes('renk-duzeltme') ||
+            hobby.slug.includes('photo-editing') ||
+            hobby.slug.includes('fotograf-duzenleme')) && (
+            <TabsTrigger value="gallery">Galeri</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Overview Tab */}
@@ -319,16 +337,16 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  Recent Entries
+                  Son Makaleler
                   <Button variant="ghost" size="sm" onClick={() => router.push(`/hobbies/${params.id}?tab=entries`)}>
-                    View All
+                    Tümünü Gör
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {entries.slice(0, 3).map(entry => (
-                    <div key={entry.id} className="flex items-start space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer" onClick={() => handleEntryClick(entry.id)}>
+                    <div key={entry.id} className="flex items-start space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer" onClick={() => handleEntryClick(entry)}>
                       <div className="w-12 h-12 bg-muted rounded flex items-center justify-center shrink-0">
                         <FileText className="h-6 w-6" />
                       </div>
@@ -352,7 +370,7 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
             {/* Popular Tags */}
             <Card>
               <CardHeader>
-                <CardTitle>Popular Tags</CardTitle>
+                <CardTitle>Popüler Etiketler</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -370,28 +388,37 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>Hızlı İşlemler</CardTitle>
               <CardDescription>
-                Common tasks for managing this hobby
+                Bu hobiyi yönetmek için genel görevler
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Button variant="outline" className="h-20 flex-col" onClick={() => router.push('/entries/new')}>
                   <Plus className="h-6 w-6 mb-2" />
-                  Add Entry
+                  Makale Ekle
                 </Button>
-                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push(`/hobbies/${params.id}?tab=entries`)}>
+                <Button variant="outline" className="h-20 flex-col" onClick={() => {
+                  router.push(`/hobbies/${params.id}?tab=entries`)
+                  // Focus on search input after navigation
+                  setTimeout(() => {
+                    const searchInput = document.querySelector('input[placeholder*="ara"]') as HTMLInputElement
+                    if (searchInput) {
+                      searchInput.focus()
+                    }
+                  }, 100)
+                }}>
                   <Search className="h-6 w-6 mb-2" />
-                  Search
+                  Ara
                 </Button>
-                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push(`/hobbies/${params.id}?tab=analytics`)}>
-                  <BarChart3 className="h-6 w-6 mb-2" />
-                  Analytics
+                <Button variant="outline" className="h-20 flex-col" onClick={() => router.push(`/hobbies/${params.id}?tab=shelves`)}>
+                  <FolderOpen className="h-6 w-6 mb-2" />
+                  Raflar
                 </Button>
                 <Button variant="outline" className="h-20 flex-col" onClick={() => router.push('/settings')}>
                   <Settings className="h-6 w-6 mb-2" />
-                  Settings
+                  Ayarlar
                 </Button>
               </div>
             </CardContent>
@@ -406,7 +433,7 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
               <div className="flex items-center space-x-2">
                 <Search className="h-4 w-4" />
                 <Input
-                  placeholder="Search entries..."
+                  placeholder="Makaleleri ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-64"
@@ -472,7 +499,7 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
             {filteredEntries.map(entry => (
               <Card key={entry.id} className={`hover:shadow-md transition-shadow cursor-pointer ${
                 viewMode === 'list' ? 'flex' : ''
-              }`} onClick={() => handleEntryClick(entry.id)}>
+              }`} onClick={() => handleEntryClick(entry)}>
                 {entry.image && (
                   <div className={`bg-muted rounded ${
                     viewMode === 'list' ? 'w-24 h-24 shrink-0' : 'h-48'
@@ -517,8 +544,8 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           {filteredEntries.length === 0 && (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No entries found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+              <h3 className="text-lg font-medium">Makale bulunamadı</h3>
+              <p className="text-muted-foreground">Arama veya filtre kriterlerinizi ayarlamayı deneyin</p>
             </div>
           )}
         </TabsContent>
@@ -528,34 +555,31 @@ export default function HobbyPage({ params, searchParams }: HobbyPageProps) {
           <ShelvesGrid hobbyId={parseInt(params.id)} />
         </TabsContent>
 
-        {/* Gallery Tab */}
-        <TabsContent value="gallery">
-          <PhotographyGallery hobbyId={parseInt(params.id)} />
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Analytics</CardTitle>
-              <CardDescription>
-                Comprehensive insights into your {hobby.name.toLowerCase()} activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">Advanced Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">Detailed charts, trends, and insights will be available here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Gallery Tab - Only for Photography and its sub-hobbies */}
+        {(hobby.name.toLowerCase().includes('photography') || 
+          hobby.name.toLowerCase().includes('fotoğrafçılık') ||
+          hobby.name.toLowerCase().includes('shooting') ||
+          hobby.name.toLowerCase().includes('çekim') ||
+          hobby.name.toLowerCase().includes('color grading') ||
+          hobby.name.toLowerCase().includes('renk düzeltme') ||
+          hobby.name.toLowerCase().includes('photo editing') ||
+          hobby.name.toLowerCase().includes('fotoğraf düzenleme') ||
+          hobby.slug.includes('photo') ||
+          hobby.slug.includes('shooting') ||
+          hobby.slug.includes('cekim') ||
+          hobby.slug.includes('color-grading') ||
+          hobby.slug.includes('renk-duzeltme') ||
+          hobby.slug.includes('photo-editing') ||
+          hobby.slug.includes('fotograf-duzenleme')) && (
+          <TabsContent value="gallery">
+            <PhotographyGallery hobbyId={parseInt(params.id)} hobbyName={hobby.name} />
+          </TabsContent>
+        )}
       </Tabs>
       
       {/* Entry Modal */}
       <EntryModal
-        entryId={selectedEntryId}
+        entry={selectedEntry}
         open={entryModalOpen}
         onOpenChange={setEntryModalOpen}
       />
