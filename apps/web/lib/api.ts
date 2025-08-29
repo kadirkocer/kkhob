@@ -159,17 +159,25 @@ class ApiClient {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await fetch(`${API_BASE_URL}/api/upload/`, {
-      method: 'POST',
-      body: formData,
-    })
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/upload/`, {
+        method: 'POST',
+        body: formData,
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }))
-      throw new Error(errorData.detail || 'Upload failed')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }))
+        console.error('Upload error:', errorData)
+        throw new Error(errorData.detail || 'Upload failed')
+      }
+
+      const result = await response.json()
+      console.log('Upload success:', result)
+      return result
+    } catch (error) {
+      console.error('Upload network error:', error)
+      throw error
     }
-
-    return response.json()
   }
 }
 

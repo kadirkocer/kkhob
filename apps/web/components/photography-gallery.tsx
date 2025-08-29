@@ -68,69 +68,140 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
   const queryClient = useQueryClient()
   const { t, ready } = useTranslation()
 
+
+  // State for photos to avoid hydration mismatch
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(true)
+  
+  // Load photos after component mounts
+  useEffect(() => {
+    if (!mounted) return
+    
+    const loadPhotos = () => {
+      // Get uploaded files from localStorage
+      const uploadedFiles = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+      
+      // Mock photos to show the layout (will be replaced by real API)
+      const mockPhotos: Photo[] = uploadedFiles.length === 0 ? [
+        {
+          id: 1,
+          title: "Mountain Landscape",
+          description: "Beautiful sunrise over the mountains",
+          filename: "mountain-landscape.jpg",
+          thumbnail_path: null, // No real image
+          width: 3840,
+          height: 2160,
+          size_bytes: 2450000,
+          created_at: "2025-08-20T08:30:00Z",
+          is_favorite: true,
+          view_count: 45,
+          tags: ["landscape", "mountains", "sunrise", "nature"]
+        },
+        {
+          id: 2,
+          title: "Urban Architecture", 
+          description: "Modern building design",
+          filename: "urban-architecture.jpg",
+          thumbnail_path: null, // No real image
+          width: 2880,
+          height: 4320,
+          size_bytes: 1800000,
+          created_at: "2025-08-19T14:22:00Z",
+          is_favorite: false,
+          view_count: 23,
+          tags: ["architecture", "urban", "building", "modern"]
+        }
+      ] : []
+      
+      // Set photos and stop loading
+      setPhotos([...uploadedFiles, ...mockPhotos])
+      setIsLoadingPhotos(false)
+    }
+    
+    loadPhotos()
+  }, [mounted])
+  
+  // Function to refresh photos
+  const refreshPhotos = () => {
+    if (typeof window !== 'undefined') {
+      const uploadedFiles = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+      const mockPhotos: Photo[] = uploadedFiles.length === 0 ? [
+        {
+          id: 1,
+          title: "Mountain Landscape",
+          description: "Beautiful sunrise over the mountains",
+          filename: "mountain-landscape.jpg",
+          thumbnail_path: null,
+          width: 3840,
+          height: 2160,
+          size_bytes: 2450000,
+          created_at: "2025-08-20T08:30:00Z",
+          is_favorite: true,
+          view_count: 45,
+          tags: ["landscape", "mountains", "sunrise", "nature"]
+        },
+        {
+          id: 2,
+          title: "Urban Architecture", 
+          description: "Modern building design",
+          filename: "urban-architecture.jpg",
+          thumbnail_path: null,
+          width: 2880,
+          height: 4320,
+          size_bytes: 1800000,
+          created_at: "2025-08-19T14:22:00Z",
+          is_favorite: false,
+          view_count: 23,
+          tags: ["architecture", "urban", "building", "modern"]
+        }
+      ] : []
+      
+      setPhotos([...uploadedFiles, ...mockPhotos])
+    }
+  }
+
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       return api.uploadFile(file)
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Upload successful:', data)
+      
+      // Create a photo object from the upload response
+      const newPhoto: Photo = {
+        id: Date.now(), // Temporary ID
+        title: data.original_filename.replace(/\.[^/.]+$/, ""), // Remove extension
+        description: `Uploaded ${data.original_filename}`,
+        filename: data.filename,
+        thumbnail_path: data.url,
+        width: 1920, // Default values - in real app would extract from image
+        height: 1080,
+        size_bytes: data.size,
+        created_at: new Date().toISOString(),
+        is_favorite: false,
+        view_count: 0,
+        tags: ['uploaded']
+      }
+      
+      // Save to localStorage (temporary solution) - only on client side
+      if (typeof window !== 'undefined') {
+        const existingPhotos = JSON.parse(localStorage.getItem('uploadedPhotos') || '[]')
+        existingPhotos.push(newPhoto)
+        localStorage.setItem('uploadedPhotos', JSON.stringify(existingPhotos))
+      }
+      
       // Refresh photos after upload
-      queryClient.invalidateQueries({ queryKey: ['photos'] })
+      refreshPhotos()
+      alert('File uploaded successfully!')
+    },
+    onError: (error) => {
+      console.error('Upload failed:', error)
+      alert(`Upload failed: ${error.message}`)
     }
   })
 
-  // Mock data for now - in real app would come from API
-  const mockPhotos: Photo[] = [
-    {
-      id: 1,
-      title: "Mountain Landscape",
-      description: "Beautiful sunrise over the mountains",
-      filename: "mountain-landscape.jpg",
-      thumbnail_path: "/api/media/thumb-1.jpg",
-      width: 3840,
-      height: 2160,
-      size_bytes: 2450000,
-      created_at: "2025-08-20T08:30:00Z",
-      metadata: {
-        camera: "Canon EOS R5",
-        lens: "RF 24-70mm f/2.8L IS USM",
-        focal_length: "35mm",
-        aperture: "f/8",
-        shutter_speed: "1/125s",
-        iso: "ISO 100",
-        location: "Swiss Alps",
-        date_taken: "2025-08-20T06:15:00Z"
-      },
-      is_favorite: true,
-      view_count: 45,
-      tags: ["landscape", "mountains", "sunrise", "nature"]
-    },
-    {
-      id: 2,
-      title: "Urban Architecture",
-      description: "Modern building design",
-      filename: "urban-architecture.jpg",
-      thumbnail_path: "/api/media/thumb-2.jpg", 
-      width: 2880,
-      height: 4320,
-      size_bytes: 1800000,
-      created_at: "2025-08-19T14:22:00Z",
-      metadata: {
-        camera: "Sony α7R IV",
-        lens: "FE 16-35mm f/2.8 GM",
-        focal_length: "24mm",
-        aperture: "f/5.6",
-        shutter_speed: "1/250s",
-        iso: "ISO 200",
-        location: "New York City"
-      },
-      is_favorite: false,
-      view_count: 23,
-      tags: ["architecture", "urban", "building", "modern"]
-    }
-  ]
-
-  const photos = mockPhotos.filter(photo => 
+  const filteredPhotos = photos.filter((photo: Photo) => 
     filter === 'all' || (filter === 'favorites' && photo.is_favorite)
   )
 
@@ -141,9 +212,16 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.type.startsWith('image/')) {
+      console.log('Uploading file:', file.name, file.type, file.size)
       uploadMutation.mutate(file)
     } else {
+      console.error('Invalid file type:', file?.type)
       alert('Please select an image file')
+    }
+    
+    // Reset the input so the same file can be selected again if needed
+    if (event.target) {
+      event.target.value = ''
     }
   }
 
@@ -176,25 +254,56 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
     })
   }
 
-  if (!mounted) {
+  if (!mounted || isLoadingPhotos) {
     return (
-      <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ${className}`}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="aspect-square bg-muted rounded-lg animate-pulse" />
-        ))}
+      <div className={className}>
+        {/* Gallery Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Camera className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-2xl font-bold">Photography Gallery</h2>
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" disabled>
+              All
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              <Star className="h-4 w-4 mr-1" />
+              Favorites
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button size="sm" disabled>
+              <Plus className="h-4 w-4 mr-2" />
+              Upload
+            </Button>
+          </div>
+        </div>
+        
+        {/* Loading Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-square bg-muted rounded-lg animate-pulse" />
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className={className}>
+    <div className={className} suppressHydrationWarning>
       {/* Gallery Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Camera className="h-6 w-6 text-primary" />
           <div>
             <h2 className="text-2xl font-bold">Photography Gallery</h2>
-            <p className="text-muted-foreground">{photos.length} photos</p>
+            <p className="text-muted-foreground" suppressHydrationWarning>{filteredPhotos.length} photos</p>
           </div>
         </div>
         
@@ -238,7 +347,7 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
       </div>
 
       {/* Photo Grid */}
-      {photos.length === 0 ? (
+      {filteredPhotos.length === 0 ? (
         <div className="text-center py-12">
           <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-lg font-medium mb-2">No photos yet</p>
@@ -256,14 +365,28 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
             ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
             : 'masonry-grid'
         }`}>
-          {photos.map((photo) => (
+          {filteredPhotos.map((photo) => (
             <Dialog key={photo.id}>
               <DialogTrigger asChild>
                 <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200">
                   <div className="relative aspect-square bg-muted">
-                    {/* Placeholder for photo thumbnail */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900" />
-                    <ImageIcon className="absolute inset-0 m-auto h-8 w-8 text-muted-foreground" />
+                    {/* Photo thumbnail */}
+                    {photo.thumbnail_path ? (
+                      <img
+                        src={photo.thumbnail_path}
+                        alt={photo.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900" />
+                        <ImageIcon className="absolute inset-0 m-auto h-8 w-8 text-muted-foreground" />
+                      </>
+                    )}
                     
                     {/* Overlay on hover */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
@@ -308,8 +431,19 @@ export function PhotographyGallery({ hobbyId, className }: PhotoGalleryProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Photo */}
                   <div className="lg:col-span-2">
-                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                      {photo.thumbnail_path ? (
+                        <img
+                          src={photo.thumbnail_path}
+                          alt={photo.title}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                      )}
                     </div>
                   </div>
                   
