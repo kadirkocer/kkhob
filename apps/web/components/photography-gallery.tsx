@@ -26,7 +26,9 @@ import {
   Filter,
   Search,
   Plus,
-  Upload
+  Upload,
+  Trash2,
+  X
 } from 'lucide-react'
 
 interface PhotoGalleryProps {
@@ -40,7 +42,7 @@ interface Photo {
   title: string
   description?: string
   filename: string
-  thumbnail_path?: string
+  thumbnail_path?: string | null
   width?: number
   height?: number
   size_bytes?: number
@@ -204,6 +206,32 @@ export function PhotographyGallery({ hobbyId, className, hobbyName }: PhotoGalle
       alert(`Upload failed: ${error.message}`)
     }
   })
+
+  const deletePhotoMutation = useMutation({
+    mutationFn: (photoId: number) => {
+      // For now, we'll just remove from localStorage since we don't have a delete API for uploaded files
+      return Promise.resolve()
+    },
+    onSuccess: (_, photoId) => {
+      const hobbyKey = `uploadedPhotos_${hobbyId || 'general'}`
+      if (typeof window !== 'undefined') {
+        const existingPhotos = JSON.parse(localStorage.getItem(hobbyKey) || '[]')
+        const updatedPhotos = existingPhotos.filter((p: Photo) => p.id !== photoId)
+        localStorage.setItem(hobbyKey, JSON.stringify(updatedPhotos))
+      }
+      refreshPhotos()
+      alert('Fotoğraf başarıyla silindi!')
+    },
+    onError: (error) => {
+      alert(`Fotoğraf silinirken hata oluştu: ${error.message}`)
+    }
+  })
+
+  const handleDeletePhoto = (photo: Photo) => {
+    if (confirm(`"${photo.title}" fotoğrafını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+      deletePhotoMutation.mutate(photo.id)
+    }
+  }
 
   const filteredPhotos = photos.filter((photo: Photo) => 
     filter === 'all' || (filter === 'favorites' && photo.is_favorite)
@@ -549,6 +577,15 @@ export function PhotographyGallery({ hobbyId, className, hobbyName }: PhotoGalle
                       <Button className="w-full" variant="outline">
                         <Heart className="h-4 w-4 mr-2" />
                         {photo.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                      </Button>
+                      <Button 
+                        className="w-full" 
+                        variant="destructive"
+                        onClick={() => handleDeletePhoto(photo)}
+                        disabled={deletePhotoMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {deletePhotoMutation.isPending ? 'Siliniyor...' : 'Fotoğrafı Sil'}
                       </Button>
                     </div>
                   </div>

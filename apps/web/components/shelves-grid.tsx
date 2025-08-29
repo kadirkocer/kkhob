@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { api } from '@/lib/api'
 import { 
   BookOpen,
@@ -41,6 +42,17 @@ export function ShelvesGrid({ hobbyId, className }: ShelvesGridProps) {
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
   const { t, ready } = useTranslation()
   const queryClient = useQueryClient()
+
+  const deleteShelfMutation = useMutation({
+    mutationFn: (shelfId: number) => api.deleteShelf(shelfId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shelves'] })
+      alert('Raf başarıyla silindi!')
+    },
+    onError: (error) => {
+      alert(`Raf silinirken hata oluştu: ${error.message}`)
+    }
+  })
 
   const createShelfMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -96,6 +108,12 @@ export function ShelvesGrid({ hobbyId, className }: ShelvesGridProps) {
 
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleDeleteShelf = (shelfId: number, shelfName: string) => {
+    if (confirm(`"${shelfName}" rafını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve raftaki tüm öğeler silinecek.`)) {
+      deleteShelfMutation.mutate(shelfId)
+    }
   }
 
   const handleCreateShelf = () => {
@@ -268,13 +286,30 @@ export function ShelvesGrid({ hobbyId, className }: ShelvesGridProps) {
                   </CardDescription>
                 )}
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => alert('Raf düzenleme özelliği yakında eklenecek!')}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Düzenle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleDeleteShelf(shelf.id, shelf.name)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Sil
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           

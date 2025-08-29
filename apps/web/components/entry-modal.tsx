@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +17,8 @@ import {
   FileText,
   Tag,
   Clock,
-  User
+  User,
+  Trash2
 } from 'lucide-react'
 
 interface Entry {
@@ -43,17 +44,42 @@ interface EntryModalProps {
   entry: Entry | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onEntryDeleted?: () => void
 }
 
-export function EntryModal({ entry, open, onOpenChange }: EntryModalProps) {
+export function EntryModal({ entry, open, onOpenChange, onEntryDeleted }: EntryModalProps) {
   if (!entry) return null
+  
+  const queryClient = useQueryClient()
+  
+  const deleteEntryMutation = useMutation({
+    mutationFn: () => api.deleteEntry(entry.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hobbyEntries'] })
+      queryClient.invalidateQueries({ queryKey: ['entries'] })
+      onOpenChange(false)
+      onEntryDeleted?.()
+      alert('Makale başarıyla silindi!')
+    },
+    onError: (error) => {
+      alert(`Makale silinirken hata oluştu: ${error.message}`)
+    }
+  })
 
   const handleEdit = () => {
-    alert(`Makale düzenleme özelliği yakında eklenecek! (Makale ID: ${entry.id})`)
+    // Open entry in edit mode in new tab
+    window.open(`/entries/${entry.id}/edit`, '_blank')
   }
 
   const handleOpenNewTab = () => {
-    alert(`Yeni sekmede açma özelliği yakında eklenecek! (Makale ID: ${entry.id})`)
+    // Open entry in view mode in new tab
+    window.open(`/entries/${entry.id}`, '_blank')
+  }
+
+  const handleDelete = () => {
+    if (confirm('Bu makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+      deleteEntryMutation.mutate()
+    }
   }
 
   const handleShare = () => {
@@ -238,6 +264,16 @@ export function EntryModal({ entry, open, onOpenChange }: EntryModalProps) {
                     <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleShare}>
                       <Share className="h-4 w-4 mr-2" />
                       Paylaş
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="w-full justify-start" 
+                      onClick={handleDelete}
+                      disabled={deleteEntryMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteEntryMutation.isPending ? 'Siliniyor...' : 'Makaleyi Sil'}
                     </Button>
                   </div>
                 </div>

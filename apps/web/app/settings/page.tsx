@@ -101,13 +101,14 @@ export default function SettingsPage() {
     setSettings(prev => {
       const keys = path.split('.')
       const newSettings = { ...prev }
-      let current = newSettings
+      let current: any = newSettings
       
       for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i] as keyof typeof current] = { ...current[keys[i] as keyof typeof current] }
+        const key = keys[i]
+        current = current[key] = { ...current[key] }
       }
       
-      current[keys[keys.length - 1] as keyof typeof current] = value
+      current[keys[keys.length - 1]] = value
       return newSettings
     })
     setHasChanges(true)

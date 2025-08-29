@@ -46,6 +46,13 @@ class ApiClient {
     })
   }
 
+  async updateHobby(id: number, data: UpdateHobbyData) {
+    return this.request<{ message: string }>(`/api/hobbies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
   // Entries
   async getEntries(params: GetEntriesParams = {}) {
     const searchParams = new URLSearchParams()
@@ -74,15 +81,17 @@ class ApiClient {
     })
   }
 
+  async deleteEntry(id: number) {
+    return this.request<{ message: string }>(`/api/entries/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   async updateEntry(id: number, data: UpdateEntryData) {
     return this.request<Entry>(`/api/entries/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
-  }
-
-  async deleteEntry(id: number) {
-    return this.request(`/api/entries/${id}`, { method: 'DELETE' })
   }
 
   // Search
@@ -154,6 +163,12 @@ class ApiClient {
     })
   }
 
+  async deleteShelf(id: number) {
+    return this.request<{ message: string }>(`/api/shelves/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   // File Upload
   async uploadFile(file: File) {
     const formData = new FormData()
@@ -202,6 +217,14 @@ export interface CreateHobbyData {
   icon?: string
   color?: string
   parent_id?: number | null
+  position?: number
+}
+
+export interface UpdateHobbyData {
+  name?: string
+  slug?: string
+  icon?: string
+  color?: string
   position?: number
 }
 

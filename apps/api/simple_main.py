@@ -594,7 +594,7 @@ async def update_hobby(hobby_id: int, hobby_data: dict):
     
     sql = """
     UPDATE hobbies 
-    SET name = ?, slug = ?, icon = ?, color = ?
+    SET name = ?, slug = ?, icon = ?, color = ?, position = ?
     WHERE id = ?
     """
     
@@ -603,6 +603,7 @@ async def update_hobby(hobby_id: int, hobby_data: dict):
         hobby_data.get("slug"),
         hobby_data.get("icon"),
         hobby_data.get("color"),
+        hobby_data.get("position"),
         hobby_id
     ])
     
@@ -614,6 +615,47 @@ async def update_hobby(hobby_id: int, hobby_data: dict):
     db.close()
     
     return {"message": "Hobby updated successfully"}
+
+@app.delete("/api/entries/{entry_id}")
+async def delete_entry(entry_id: int):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Check if entry exists
+    cursor.execute("SELECT id FROM entries WHERE id = ?", [entry_id])
+    if not cursor.fetchone():
+        db.close()
+        raise HTTPException(status_code=404, detail="Entry not found")
+    
+    # Delete the entry
+    cursor.execute("DELETE FROM entries WHERE id = ?", [entry_id])
+    
+    db.commit()
+    db.close()
+    
+    return {"message": "Entry deleted successfully"}
+
+@app.delete("/api/shelves/{shelf_id}")
+async def delete_shelf(shelf_id: int):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Check if shelf exists
+    cursor.execute("SELECT id FROM shelves WHERE id = ?", [shelf_id])
+    if not cursor.fetchone():
+        db.close()
+        raise HTTPException(status_code=404, detail="Shelf not found")
+    
+    # Delete shelf items first
+    cursor.execute("DELETE FROM shelf_items WHERE shelf_id = ?", [shelf_id])
+    
+    # Delete the shelf
+    cursor.execute("DELETE FROM shelves WHERE id = ?", [shelf_id])
+    
+    db.commit()
+    db.close()
+    
+    return {"message": "Shelf deleted successfully"}
 
 @app.delete("/api/hobbies/clear")
 async def clear_all_hobbies():
